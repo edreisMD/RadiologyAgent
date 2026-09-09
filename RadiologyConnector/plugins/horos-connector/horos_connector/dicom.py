@@ -27,6 +27,20 @@ def original_series_uid(series):
     raise ValueError('Horos series identity has an unrecognized format.')
 
 
+def native_instance(study, frame, series_uid=None):
+    response=Horos().call('/dicom',{'studyID':study['id'],'imageID':frame['id']})
+    raw=base64.b64decode(response['dicom'],validate=True)
+    ds=pydicom.dcmread(io.BytesIO(raw),stop_before_pixels=True)
+    identity=(str(ds.StudyInstanceUID),str(ds.SOPInstanceUID))
+    if identity!=(study['studyUID'],frame['sopInstanceUID']) or (series_uid is not None and str(ds.SeriesInstanceUID)!=series_uid):
+        raise ValueError('Original DICOM identity differs from Horos; load rejected.')
+    if not re.fullmatch(r'[0-9]+(?:\.[0-9]+)+',str(ds.SeriesInstanceUID)):
+        raise ValueError('Original DICOM has no valid series identity.')
+    if not 0<=frame['frame']<int(ds.get('NumberOfFrames',1)):
+        raise ValueError('DICOM frame index is outside original instance.')
+    return raw,ds
+
+
 def manifest(session_id):
     ws=Workspace();state=ws.read(session_id)
     folder=data_root()/'dicom'/session_id;folder.mkdir(parents=True,exist_ok=True,mode=0o700)
@@ -34,7 +48,7 @@ def manifest(session_id):
         fcntl.flock(lock,fcntl.LOCK_EX)
         saved=folder/'manifest.json'
         previous=json.loads(saved.read_text()) if saved.exists() else {}
-        if previous.get('protocol')==2:return previous
+        if previous.get('protocol')==3 and previous.get('study_uid')==state['detail']['study']['studyUID'] and previous.get('session_id')==session_id:return previous
         study=state['detail']['study']
         if 'dicom-original' not in Horos().call('/health').get('capabilities',[]):
             return {'session_id':session_id,'study_uid':study['studyUID'],'series':[],'complete':False,
@@ -43,15 +57,29 @@ def manifest(session_id):
         result=[]
         # Inventory only: never transfer an entire CT/MR before showing slice one.
         for series in state['detail']['series']:
-            frames=[];series_uid=original_series_uid(series)
+            frames=[]
+            if series['uid']=='LOCALIZER':
+                # Horos groups scout instances under LOCALIZER, potentially from
+                # different DICOM series. Resolve each exact instance, never treat
+                # this internal group label as a DICOM UID or borrow another series.
+                series_uid=None
+            else:series_uid=original_series_uid(series)
+            resolved={}
             for frame in series['frames']:
                 sop=frame.get('sopInstanceUID')
                 if not sop:raise ValueError('Native inventory has no SOP Instance UID.')
-                key=digest([study['studyUID'],series_uid,sop])[:32]
+                frame_series_uid=series_uid
+                if frame_series_uid is None:
+                    if sop not in resolved:
+                        _,ds=native_instance(study,frame)
+                        resolved[sop]=(str(ds.SeriesInstanceUID),int(ds.get('NumberOfFrames',1)))
+                    frame_series_uid,count=resolved[sop]
+                    if not 0<=frame['frame']<count:raise ValueError('DICOM frame index is outside original instance.')
+                key=digest([study['studyUID'],frame_series_uid,sop])[:32]
                 frames.append({'key':key,'index':frame['index'],'frame':frame['frame'],
-                               'sop_instance_uid':sop,'rows':frame.get('height'),'columns':frame.get('width')})
+                               'series_instance_uid':frame_series_uid,'sop_instance_uid':sop,'rows':frame.get('height'),'columns':frame.get('width')})
             result.append({'uid':series['uid'],'name':series['name'],'modality':series['modality'],'frames':frames})
-        value={'protocol':2,'session_id':session_id,'study_uid':study['studyUID'],'series':result,
+        value={'protocol':3,'session_id':session_id,'study_uid':study['studyUID'],'series':result,
                'source':'Original DICOM from Horos','complete':True,'delivery':'on-demand'}
         # Retain validated older cached files as aliases for already-open clients.
         if previous.get('complete') and previous.get('series'):write_json(folder/'legacy-manifest.json',previous)
@@ -78,12 +106,7 @@ def file_path(session_id,key):
         state=ws.read(session_id);study=state['detail']['study']
         native_series=next(s for s in state['detail']['series'] if s['uid']==series['uid'])
         native_frame=next(f for f in native_series['frames'] if f['index']==frame['index'])
-        response=Horos().call('/dicom',{'studyID':study['id'],'imageID':native_frame['id']})
-        raw=base64.b64decode(response['dicom'],validate=True)
-        ds=pydicom.dcmread(io.BytesIO(raw),stop_before_pixels=True)
-        expected=(study['studyUID'],original_series_uid(native_series),frame['sop_instance_uid'])
-        if (str(ds.StudyInstanceUID),str(ds.SeriesInstanceUID),str(ds.SOPInstanceUID))!=expected:
-            raise ValueError('Original DICOM identity differs from Horos; load rejected.')
+        raw,ds=native_instance(study,native_frame,frame['series_instance_uid'])
         count=int(ds.get('NumberOfFrames',1))
         if any(not 0<=f['frame']<count for f in series['frames'] if f['key']==key):
             raise ValueError('DICOM frame index is outside original instance.')

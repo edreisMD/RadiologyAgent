@@ -13,7 +13,7 @@ from .media import manifest_path
 from .queue import Queue
 from .storage import config, data_root
 from . import reports
-from .workspace import Workspace
+from .workspace import Workspace, view_identity
 from .workspace_service import workspace_url
 from .dispatch import Dispatcher
 from .privacy import public_study, series_name
@@ -57,7 +57,7 @@ def inspect_view(session_id: str, changes: dict, note: str = "Inspecting image",
         capture=ws.folder(session_id)/"browser-render.json"
         for _ in range(100):
             rendered=json.loads(capture.read_text()) if capture.exists() else {}
-            if rendered.get("revision")==state["revision"] and rendered.get("follow") and time.time()-rendered.get("time",0)<15:
+            if rendered.get("revision")==state["revision"] and rendered.get("identity")==view_identity(state) and rendered.get("follow") and time.time()-rendered.get("time",0)<15:
                 png=(ws.folder(session_id)/rendered["image"]).read_bytes();source=rendered.get("renderer", "Cornerstone3D")+" browser viewport";break
             if not state["follow"]:
                 raise ValueError("The radiologist is inspecting independently. Your view is queued; ask them to resume following for a shared browser capture, or use view_frames for independent review. Do not change their follow setting.")
@@ -83,7 +83,7 @@ def current_view(session_id: str, job_id: str = "", claim_token: str = "") -> Ca
     import time
     ws=Workspace();state=ws.read(session_id);path=ws.folder(session_id)/"browser-render.json"
     capture=json.loads(path.read_text()) if path.exists() else {}
-    if capture.get("revision")!=state["revision"] or time.time()-capture.get("time",0)>60:
+    if capture.get("revision")!=state["revision"] or capture.get("identity")!=view_identity(state) or time.time()-capture.get("time",0)>60:
         raise ValueError("No current browser capture. Show Images or Split in the Radiology Agent workspace and wait for rendering.")
     view=state["agent_view"] if capture["follow"] else state["user_view"]
     if job_id or claim_token:

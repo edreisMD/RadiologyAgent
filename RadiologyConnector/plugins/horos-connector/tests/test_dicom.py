@@ -8,7 +8,7 @@ from PIL import Image
 from pydicom.dataset import FileDataset, FileMetaDataset
 from pydicom.uid import ExplicitVRLittleEndian, CTImageStorage
 from test_connector import detail, FakeEngine, isolated
-from horos_connector.workspace import Workspace
+from horos_connector.workspace import Workspace, view_identity
 from horos_connector import dicom
 from horos_connector.storage import write_json
 
@@ -86,10 +86,60 @@ def test_browser_capture_keeps_renderer_identity_and_rejects_stale_revision(isol
     out=io.BytesIO();Image.new('RGB',(128,128),(120,80,40)).save(out,format='PNG')
     png=base64.b64encode(out.getvalue()).decode()
     assert workspace_service.ui_call('rendered',dict(session_id=sid,revision=0,png=png))=={'accepted':False}
+    identity=view_identity(ws.read(sid))
+    for bad in [None,dict(identity,study_uid='9.8.7'),dict(identity,image_index=1),dict(identity,sop_instance_uid='9.8.7')]:
+        with pytest.raises(ValueError,match='Viewport identity'):
+            workspace_service.ui_call('rendered',dict(session_id=sid,revision=1,png=png,identity=bad))
     for renderer in ['Cornerstone3D','Horos preview']:
-        workspace_service.ui_call('rendered',dict(session_id=sid,revision=1,png=png,renderer=renderer))
+        workspace_service.ui_call('rendered',dict(session_id=sid,revision=1,png=png,renderer=renderer,identity=identity))
         result=server.current_view(sid)
         assert renderer in result.content[0].text
         assert base64.b64decode(result.content[1].data)==out.getvalue()
     ws.action(sid,{'zoom':2})
     with pytest.raises(ValueError,match='No current browser capture'):server.current_view(sid)
+
+
+def localizer_study(monkeypatch,wrong_study=False):
+    d=detail(count=2);d['series'][0]['uid']='LOCALIZER'
+    # A Horos group is allowed to contain more than one original DICOM series.
+    d['series'][0]['dicomUID']='1.2.3.1'
+    state=Workspace(FakeEngine()).open(detail=d);calls=[]
+    class Native:
+        def call(self,route,body=None):
+            if route=='/health':return {'capabilities':['dicom-original']}
+            assert route=='/dicom' and body['studyID']=='study'
+            i=int(body['imageID'].split('-')[-1]);calls.append(i)
+            raw=fixture_bytes(study='9.8.7' if wrong_study else '1.2.3',series=f'1.2.3.{i+1}',sop=f'1.2.3.{i+10}',count=1)
+            return {'dicom':base64.b64encode(raw).decode()}
+    monkeypatch.setattr(dicom,'Horos',Native)
+    return state['session_id'],calls
+
+
+def test_localizer_group_resolves_each_original_series_and_keeps_exact_images(isolated,monkeypatch):
+    sid,calls=localizer_study(monkeypatch)
+    value=dicom.manifest(sid)
+    assert value['protocol']==3 and value['series'][0]['uid']=='LOCALIZER'
+    frames=value['series'][0]['frames']
+    assert [f['series_instance_uid'] for f in frames]==['1.2.3.1','1.2.3.2']
+    assert len(calls)==2
+    for i,f in enumerate(frames):
+        assert dicom.file_path(sid,f['key']).read_bytes()==fixture_bytes(series=f'1.2.3.{i+1}',sop=f'1.2.3.{i+10}',count=1)
+    assert dicom.manifest(sid)==value and len(calls)==4
+
+
+def test_localizer_from_another_patient_is_rejected(isolated,monkeypatch):
+    sid,_=localizer_study(monkeypatch,wrong_study=True)
+    with pytest.raises(ValueError,match='identity differs'):dicom.manifest(sid)
+    assert not list((isolated/'dicom'/sid).glob('*.dcm'))
+    assert not (isolated/'dicom'/sid/'manifest.json').exists()
+
+
+def test_protocol_two_inventory_upgrades_without_eager_stack_download(isolated,monkeypatch):
+    sid,calls=setup_study(monkeypatch)
+    value=dicom.manifest(sid)
+    value['protocol']=2
+    for frame in value['series'][0]['frames']:frame.pop('series_instance_uid')
+    write_json(isolated/'dicom'/sid/'manifest.json',value)
+    upgraded=dicom.manifest(sid)
+    assert upgraded['protocol']==3 and not calls
+    assert all(f['series_instance_uid']=='1.2.3.1' for f in upgraded['series'][0]['frames'])

@@ -1,5 +1,5 @@
 "use strict";
-import {initializeImaging,present,previewPresentation,isReady,cacheStatus} from './imaging.js';
+import {initializeImaging,present,previewPresentation,isReady,cacheStatus,setImagingSession} from './imaging.js';
 (() => {
   const $=id=>document.getElementById(id);
   const params=new URLSearchParams(location.hash.slice(1));
@@ -7,6 +7,7 @@ import {initializeImaging,present,previewPresentation,isReady,cacheStatus} from 
   let session=params.get("session")||null, state=null, mode="pan", editing=false, editRevision=0;
   let busy=false, polling=false, retryAt=0, previewSequence=0, shownImage="", seriesSession="", searchTimer, imagingInitialized=false;
   let localPending=false,localGeneration=0,syncTimer,syncPromise=null;
+  let navigationGeneration=0;
   async function api(method,args={}) {
     if(!token)throw new Error("Open this workspace through the Horos connector in Codex.");
     const response=await fetch("/api",{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({method,args})});
@@ -16,8 +17,15 @@ import {initializeImaging,present,previewPresentation,isReady,cacheStatus} from 
   function clearError(){$("error").hidden=true;}
   const view=()=>state.follow?state.agent_view:state.user_view;
   function setSession(id){session=id;params.set("session",id||"");history.replaceState(null,"","#"+params.toString());}
+  function clearStudyImages(id){
+    setImagingSession(id);previewSequence++;shownImage="";
+    $("image").hidden=true;$("image").removeAttribute("src");$("cornerstone").hidden=false;
+    $("preview-label").hidden=true;$("region").hidden=true;$("cache-status").hidden=true;
+    $("image-status").textContent="Loading original DICOM…";$("image-status").hidden=false;
+  }
   async function worklist(){
     await flushLocal();
+    navigationGeneration++;clearStudyImages(null);
     setSession(null);state=null;shownImage="";seriesSession="";
     $("workspace").hidden=true;$("worklist").hidden=false;$("back").hidden=true;
     await refresh();
@@ -41,8 +49,9 @@ import {initializeImaging,present,previewPresentation,isReady,cacheStatus} from 
   async function openStudy(uid){
     if(editing)return showError(new Error("Save or cancel your draft edits before changing studies."));
     await flushLocal();
+    const navigation=++navigationGeneration;
     $("studies").setAttribute("aria-busy","true");
-    try{const next=await api("open",{study_uid:uid});setSession(next.session_id);await render(next);clearError();}
+    try{const next=await api("open",{study_uid:uid});if(navigation!==navigationGeneration)return;setSession(next.session_id);await render(next);clearError();}
     finally{$("studies").removeAttribute("aria-busy");}
   }
   async function loadState(){
@@ -67,10 +76,12 @@ import {initializeImaging,present,previewPresentation,isReady,cacheStatus} from 
     const ctx=canvas.getContext('2d');ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);
     const scale=Math.min(canvas.width/source.naturalWidth,canvas.height/source.naturalHeight),w=source.naturalWidth*scale,h=source.naturalHeight*scale;
     ctx.drawImage(source,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
-    await api('rendered',{session_id:session,revision:state.revision,png:canvas.toDataURL('image/png').split(',')[1],renderer:'Horos preview'});
+    const v=view(),identity={study_uid:state.study.studyUID,series_uid:v.series_uid,sop_instance_uid:v.sop_instance_uid,image_index:v.image_index,dicom_frame:v.dicom_frame};
+    await api('rendered',{session_id:session,revision:state.revision,png:canvas.toDataURL('image/png').split(',')[1],renderer:'Horos preview',identity});
   }
   async function render(next){
     if(state?.session_id===next.session_id&&state.revision>next.revision)return;
+    if(state?.session_id!==next.session_id)clearStudyImages(next.session_id);
     state=next;session=next.session_id;
     $("worklist").hidden=true;$("workspace").hidden=false;$("back").hidden=false;
     $("patient").textContent=state.study.patientName;
@@ -86,7 +97,8 @@ import {initializeImaging,present,previewPresentation,isReady,cacheStatus} from 
     for(const node of $("series").children)node.classList.toggle("active",node.dataset.uid===v.series_uid);
     if($("preview-label").hidden){
       if(!imagingInitialized){await initializeImaging($("cornerstone"),api,token);imagingInitialized=true;}
-      const rendered=await present(state);
+      const rendered=await present(next);
+      if(state!==next||rendered?.stale)return;
       if(rendered?.preview){
         await displayImage(state.follow?state.agent_image:state.user_image);
         $("image").hidden=false;$("cornerstone").hidden=true;$("region").hidden=true;

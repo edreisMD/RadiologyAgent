@@ -17,6 +17,11 @@ SIZE = 1280
 DEFAULT_VIEW = dict(image_index=0, window_width=None, window_center=None, zoom=1.0,
                     pan_x=0.0, pan_y=0.0, rotation=0, invert=False, region=None)
 
+def view_identity(state):
+    view=state['agent_view'] if state['follow'] else state['user_view']
+    return {'study_uid':state['detail']['study']['studyUID'],'series_uid':view['series_uid'],
+            'sop_instance_uid':view['sop_instance_uid'],'image_index':view['image_index'],'dicom_frame':view['dicom_frame']}
+
 
 class Workspace:
     def __init__(self, engine=None):

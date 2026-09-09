@@ -18,7 +18,7 @@ import urllib.request
 from urllib.parse import urlsplit, parse_qs
 from .engine import Horos
 from .storage import data_root, write_json
-from .workspace import Workspace, DEFAULT_VIEW
+from .workspace import Workspace, DEFAULT_VIEW, view_identity
 
 WEB = Path(__file__).parent / "web"
 
@@ -51,13 +51,16 @@ def ui_call(method, args):
         renderer=args.get("renderer","Cornerstone3D")
         if renderer not in {"Cornerstone3D", "Horos preview"}:raise ValueError("Unknown renderer.")
         if args["revision"]!=state["revision"]:return {"accepted":False}
+        expected=view_identity(state)
+        if args.get('identity')!=expected:
+            raise ValueError('Viewport identity does not match the selected study and image. Reload the viewer.')
         png=base64.b64decode(args["png"],validate=True)
         if len(png)>10000000:raise ValueError("Viewport capture too large.")
         from PIL import Image
         image=Image.open(io.BytesIO(png));image.load()
         if image.width>4096 or image.height>4096 or image.width<64 or image.height<64:raise ValueError("Invalid viewport dimensions.")
         image_name=ws.save_image(ws.folder(session_id),image.convert("RGB"))
-        write_json(ws.folder(session_id)/"browser-render.json",{"revision":state["revision"],"image":image_name,"follow":state["follow"],"time":time.time(),"renderer":renderer})
+        write_json(ws.folder(session_id)/"browser-render.json",{"revision":state["revision"],"image":image_name,"follow":state["follow"],"time":time.time(),"renderer":renderer,"identity":expected})
         return {"accepted":True}
     if method=="state":
         state=ws.read(session_id)
