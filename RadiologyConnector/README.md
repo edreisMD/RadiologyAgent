@@ -8,6 +8,8 @@ The connector lives entirely in this folder; the Mac application is the sibling 
 
 ## Install
 
+For a unified installer that also supports the Mac app, use the [monorepo installation guide](../docs/INSTALLATION.md). From the repository root, `python3.12 scripts/install.py --component connector` installs only this component; `--component both` also builds and installs the app. The steps below are the standalone connector procedure.
+
 Requirements: macOS 14+, Horos in `/Applications/Horos.app`, Python 3.12+, Node.js 20.19+ (or 22.12+), npm, FFmpeg, Xcode Command Line Tools, and Codex with its CLI installed. Install Horos separately from its official distribution. The Codex workflow does not require an OpenAI API key.
 
 ```sh

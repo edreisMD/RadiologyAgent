@@ -1,1 +1,26 @@
-{"name":"radiology-agent-viewer","version":"0.2.0","private":true,"type":"module","scripts":{"build":"vite build"},"dependencies":{"@cornerstonejs/core":"4.15.29","@cornerstonejs/tools":"4.15.29","@cornerstonejs/dicom-image-loader":"4.15.29","dicom-parser":"1.8.21"},"devDependencies":{"vite":"7.3.1"}}
+{
+  "name": "radiology-agent-viewer",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@cornerstonejs/core": "4.15.29",
+    "@cornerstonejs/tools": "4.15.29",
+    "@cornerstonejs/dicom-image-loader": "4.15.29",
+    "dicom-parser": "1.8.21"
+  },
+  "devDependencies": {
+    "vite": "7.3.6"
+  },
+  "overrides": {
+    "xmlbuilder2": {
+      "js-yaml": "3.15.2"
+    },
+    "@kitware/vtk.js": {
+      "fflate": "0.7.5"
+    }
+  }
+}

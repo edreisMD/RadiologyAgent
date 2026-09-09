@@ -67,6 +67,8 @@ def main():
         print('Prerequisites available. No configuration changed.')
         return
     bridge = Path.home() / 'Library/Application Support/Horos/Plugins/RadAgentEngine.horosplugin'
+    if bridge.is_symlink():
+        raise SystemExit('The native bridge destination is a symlink; it was preserved.')
     command = [codex, 'mcp', 'add', 'radiology-connector', '--', '/bin/bash', str(PLUGIN/'scripts/run.sh')] if codex else None
     if args.dry_run:
         print(json.dumps({'plugin': str(PLUGIN), 'build': ['npm ci', 'npm run build', 'bash scripts/build-engine.sh'],

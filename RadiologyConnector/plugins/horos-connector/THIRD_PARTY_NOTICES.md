@@ -5961,7 +5961,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 The complete list of contributors can be found at:
 - https://github.com/garycourt/uri-js/graphs/contributors
 
-## fflate 0.7.3
+## fflate 0.7.5
 
 License: MIT
 
@@ -6490,7 +6490,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-## js-yaml 3.14.0
+## js-yaml 3.15.2
 
 License: MIT
 

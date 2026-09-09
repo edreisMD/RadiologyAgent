@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 # a centered 412 px square in the 1920 x 1080 transparent source canvas.
 source_file="${1:-Resources/RadiologyAgentLogo.source.png}"
 iconset='.build/brand/RadAgent.iconset'
-connector_source_dir="${RADIOLOGY_CONNECTOR_SOURCE:-../RadiologyConnector}"
+connector_source_dir="${RADIOLOGY_CONNECTOR_SOURCE:-../RadiologyConnector/plugins/horos-connector}"
 mkdir -p "$iconset" "$connector_source_dir/horos_connector/web/assets"
 sips -c 512 512 --cropOffset 284 704 "$source_file" --out Resources/RadiologyAgentLogo.png >/dev/null
 cp Resources/RadiologyAgentLogo.png "$connector_source_dir/horos_connector/web/assets"/radiology-agent.png

@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import sys
+import shutil
 from pathlib import Path
 import pytest
 from PIL import Image
@@ -59,7 +60,7 @@ def test_export_preserves_every_frame_and_video_count(isolated):
     assert [f["index"] for f in series["frames"]]==[0,1,2]
     assert series["contact_sheets"][0]["image_indices"]==[0,1,2]
     video=series["videos"][0]["path"]
-    probe=subprocess.check_output(["/opt/homebrew/bin/ffprobe","-v","error","-select_streams","v:0","-count_frames","-show_entries","stream=nb_read_frames","-of","json",video])
+    probe=subprocess.check_output([shutil.which("ffprobe") or "/opt/homebrew/bin/ffprobe","-v","error","-select_streams","v:0","-count_frames","-show_entries","stream=nb_read_frames","-of","json",video])
     assert json.loads(probe)["streams"][0]["nb_read_frames"]=="3"
     class Fail:
         def render(self,*args): raise AssertionError("Cache should avoid rerendering")
