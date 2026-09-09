@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleExecutable</key><string>RadAgentEngine</string>
+<key>CFBundleIdentifier</key><string>ai.radiologyagent.HorosEngine</string>
+<key>CFBundleName</key><string>Radiology Agent Engine</string>
+<key>CFBundlePackageType</key><string>BNDL</string>
+<key>CFBundleShortVersionString</key><string>0.4.0</string>
+<key>CFBundleVersion</key><string>3</string>
+<key>NSPrincipalClass</key><string>RadAgentEngine</string>
+<key>pluginType</key><string>imageFilter</string>
+<key>MenuTitles</key><array><string>Radiology Agent Engine</string></array>
+<key>LSMinimumSystemVersion</key><string>14.0</string>
+<key>NSHumanReadableCopyright</key><string>RadiologyAgent · Research preview</string>
+</dict></plist>

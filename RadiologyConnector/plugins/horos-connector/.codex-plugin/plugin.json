@@ -1,0 +1,26 @@
+{
+  "name": "horos-connector",
+  "version": "0.1.0",
+  "description": "Radiology Agent shared DICOM viewer, report editor and per-study Codex runs, backed by Horos. Not for medical use, research only.",
+  "author": {
+    "name": "RadiologyAgent"
+  },
+  "license": "MIT",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Radiology Agent \u00b7 Horos Connector",
+    "shortDescription": "Watch Codex review DICOM studies in Radiology Agent.",
+    "longDescription": "A shared Cornerstone3D viewer and continuous report editor for the Radiology Agent Mac app and Codex browser panel. Original DICOM from Horos, visible browser tools, and a separate Codex task for each incoming study.",
+    "developerName": "RadiologyAgent",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Find a study in Horos and prepare it for review.",
+      "Check the incoming worklist and draft evaluation reports.",
+      "Show all series in the selected Horos study."
+    ]
+  }
+}

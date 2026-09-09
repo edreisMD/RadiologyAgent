@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Radiology Agent · Draft for evaluation</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/demo.css"><link rel="icon" type="image/png" href="./assets/radiology-agent.png"></head>
+<body>
+<header><button id="home" class="brand" aria-label="Open worklist"><img class="brand-logo" src="./assets/radiology-agent.png" alt="">Radiology Agent</button><span class="engine"><i></i>Horos connected</span><span id="demo-label" hidden title="Display aliases only. Original DICOM and Horos metadata are unchanged.">Demo labels</span><button id="back" hidden>Worklist</button></header>
+<aside class="sidebar" aria-label="Workspace navigation">
+  <div class="sidebar-label">Workspace</div>
+  <button id="sidebar-worklist" class="sidebar-worklist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Worklist</button>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-caption">Your images.<br>Your agent.<br>Your interpretation.</div>
+  <div class="sidebar-bottom"><img class="sidebar-mark" src="./assets/radiology-agent.png" alt=""><strong>Connected to Codex</strong><span>Not for medical use,<br>research only.</span></div>
+</aside>
+<div id="error" role="alert" hidden></div>
+<main id="worklist"><div class="list-heading"><div><div class="eyebrow">Reading room</div><h1>Your worklist</h1><p>Studies from Horos. Ready for your review.</p></div><button id="refresh" class="refresh-button" aria-label="Refresh worklist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 8a7 7 0 0 1 12-2l2 3M4 15l2 3a7 7 0 0 0 12-2"/></svg></button></div>
+<div class="worklist-controls"><div class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><input id="search" type="search" placeholder="Search patient, ID or examination" aria-label="Search worklist"></div><span id="study-count"></span></div>
+<div class="worklist-columns" aria-hidden="true"><span>Patient / examination</span><span>Modality</span><span>Status</span><span></span></div>
+<div id="studies" aria-live="polite">Connecting to Horos…</div><footer><i class="footer-dot"></i>Not for medical use, research only.</footer></main>
+<main id="workspace" hidden>
+<section class="patient"><div><h1 id="patient"></h1><p id="identity"></p></div><span class="evaluation">Draft for evaluation</span></section>
+<nav class="workspace-nav"><div class="segmented"><button id="imagesTab" aria-pressed="false">Images</button><button id="reportTab" aria-pressed="false">Report</button><button id="splitTab" aria-pressed="true">Split</button></div><button id="follow" class="follow" aria-pressed="true">Following Codex</button></nav>
+<div id="reading" data-layout="split">
+<section id="imaging">
+<div class="tools"><div class="tool-group"><button id="pan" class="selected" aria-pressed="true" title="Pan (P)">Pan</button><button id="window" aria-pressed="false" title="Window / level (W)">W/L</button><button id="zoom" aria-pressed="false" title="Zoom (Z)">Zoom</button></div><div class="tool-group"><button id="fit" title="Fit image (F)">Fit</button><button id="invert" title="Invert grayscale (I)">◐</button><button id="rotate" title="Rotate 90 degrees">↻</button><button id="native" title="Open selected series in the native Horos viewer">Open in Horos ↗</button></div></div>
+<div id="viewport" tabindex="0" role="img" aria-label="Study viewport. Double-click to open this series in Horos. Scroll or use arrow keys to change slices; drag with the selected tool."><div id="cornerstone"></div><img id="image" alt="Selected native DICOM image" draggable="false" hidden><div id="image-status">Loading original DICOM…</div><div id="region" hidden></div><div id="overlay-top"></div><div id="overlay-bottom"></div><span id="preview-label" hidden>Key image preview</span><span id="busy" hidden>Loading…</span></div>
+<div id="renderer-status" hidden></div>
+<div class="slice-control"><button id="previous" aria-label="Previous image">‹</button><input id="slice" aria-label="Series image" type="range" min="0" max="0" value="0"><span id="cache-status" hidden></span><span id="slice-label"></span><button id="next" aria-label="Next image">›</button></div>
+<div id="series" aria-label="Study series"></div>
+</section>
+<section id="document-panel"><div class="document-toolbar"><span>Draft for evaluation</span><button id="edit">Edit draft</button><button id="save" hidden>Save changes</button><button id="cancel" hidden>Cancel</button></div><article id="document"></article><textarea id="editor" hidden aria-label="Evaluation report document"></textarea></section>
+</div>
+<div class="activity"><span id="actor-dot"></span><span id="activity-text">Workspace ready</span><details id="activity-details"><summary>Activity</summary><ol id="events"></ol></details></div>
+</main>
+<script type="module" src="/app.js"></script>
+</body></html>

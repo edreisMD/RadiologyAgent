@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "radagent-horos-connector"
+version = "0.1.0"
+description = "Native Horos studies, image exports, worklist listener and evaluation documents for Codex"
+requires-python = ">=3.12"
+dependencies = ["mcp>=1.28,<2", "Pillow>=11,<13", "python-docx>=1.2,<2", "pydicom==3.0.1"]
+[project.scripts]
+radagent-horos = "horos_connector.server:main"
+[tool.setuptools.packages.find]
+include = ["horos_connector*"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools.package-data]
+horos_connector = ["web/*.html", "web/*.css", "web/*.js", "web/build/**/*"]

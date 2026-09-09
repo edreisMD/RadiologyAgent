@@ -1,0 +1,17 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+*.dcm
+*.dicom
+*.sqlite
+*.sqlite3
+*.db
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+node_modules/
+.build/
+dist/
+RadiologyConnector/plugins/horos-connector/horos_connector/web/build/
