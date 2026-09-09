@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleName</key><string>Radiology Agent</string>
+<key>CFBundleDisplayName</key><string>Radiology Agent</string>
+<key>CFBundleExecutable</key><string>RadAgent</string>
+<key>CFBundleIdentifier</key><string>ai.radiologyagent.RadAgent</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleShortVersionString</key><string>0.6.0</string>
+<key>CFBundleVersion</key><string>6</string>
+<key>CFBundleIconFile</key><string>RadAgent</string>
+<key>LSMinimumSystemVersion</key><string>14.0</string>
+<key>NSHighResolutionCapable</key><true/>
+<key>NSPrincipalClass</key><string>NSApplication</string>
+<key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
+<key>NSHumanReadableCopyright</key><string>RadiologyAgent · Research preview</string>
+</dict></plist>

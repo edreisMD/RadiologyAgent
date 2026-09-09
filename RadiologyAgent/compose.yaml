@@ -1,0 +1,14 @@
+services:
+  reporting-api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "127.0.0.1:8043:8043"
+    environment:
+      RADAGENT_API_TOKEN: ${RADAGENT_API_TOKEN:?Set a clinic API token of at least 32 characters}
+    volumes:
+      - reporting-data:/data
+    restart: unless-stopped
+volumes:
+  reporting-data:

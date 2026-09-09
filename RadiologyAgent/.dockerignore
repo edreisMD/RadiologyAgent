@@ -1,0 +1,10 @@
+.env*
+.git
+.venv
+.build
+dist
+.local
+backend-data
+**/__pycache__
+**/*.dcm
+**/*.dicom
